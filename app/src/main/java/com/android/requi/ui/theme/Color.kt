@@ -1,4 +1,4 @@
-package com.android.bcrgui.ui.theme
+package com.android.requi.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

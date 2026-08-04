@@ -1,10 +1,10 @@
-package com.android.bcrgui.model
+package com.android.requi.model
 
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.DocumentsContract
-import com.android.bcrgui.parser.BcrTemplateParser
+import com.android.requi.parser.BcrTemplateParser
 import org.json.JSONObject
 import java.io.File
 import kotlinx.coroutines.Dispatchers

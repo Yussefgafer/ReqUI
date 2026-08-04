@@ -1,4 +1,4 @@
-package com.android.bcrgui.ui
+package com.android.requi.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -427,7 +427,7 @@ fun SettingsDialog(
                             .fillMaxWidth()
                             .clickable {
                                 try {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/ArtRuntime/callrecorder-gui"))
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Yussefgafer/ReqUI"))
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
                                     e.printStackTrace()
@@ -444,7 +444,7 @@ fun SettingsDialog(
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "github.com/ArtRuntime/callrecorder-gui",
+                            text = "github.com/Yussefgafer/ReqUI",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

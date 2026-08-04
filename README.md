@@ -1,8 +1,8 @@
-# BCR Call Recordings Player
+# ReqUI
 
 A modern, fast, and feature-rich Material 3 companion player GUI for Basic Call Recorder (BCR) on Android. Designed with premium aesthetics, edge-to-edge screens, fluid animations, and robust system integration.
 
-Forked from [ArtRuntime/callrecorder-gui](https://github.com/ArtRuntime/callrecorder-gui)
+Forked from [ArtRuntime/callrecorder-gui](https://github.com/ArtRuntime/callrecorder-gui) — now maintained at [Yussefgafer/ReqUI](https://github.com/Yussefgafer/ReqUI)
 ---
 
 ## Screenshots
@@ -59,7 +59,7 @@ Forked from [ArtRuntime/callrecorder-gui](https://github.com/ArtRuntime/callreco
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/ArtRuntime/callrecorder-gui.git
+   git clone https://github.com/Yussefgafer/ReqUI.git
    ```
 2. Open the project in Android Studio.
 3. Sync Gradle and run on your emulator or physical Android device.

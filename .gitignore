@@ -33,3 +33,4 @@ as3_dump.txt
 # OS-generated files
 .DS_Store
 Thumbs.db
+local.properties

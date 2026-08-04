@@ -1,4 +1,4 @@
-package com.android.bcrgui
+package com.android.requi
 
 import org.junit.Test
 

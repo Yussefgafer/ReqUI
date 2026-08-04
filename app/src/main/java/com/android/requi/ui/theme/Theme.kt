@@ -1,4 +1,4 @@
-package com.android.bcrgui.ui.theme
+package com.android.requi.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -101,7 +101,7 @@ private fun getLightColorScheme(accent: String): ColorScheme {
 }
 
 @Composable
-fun BCRGUITheme(
+fun ReqUITheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     accentColor: String = "purple",
     amoledMode: Boolean = false,

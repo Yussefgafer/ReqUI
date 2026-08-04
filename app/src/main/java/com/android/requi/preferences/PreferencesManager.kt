@@ -1,4 +1,4 @@
-package com.android.bcrgui.preferences
+package com.android.requi.preferences
 
 import android.content.Context
 import android.content.SharedPreferences

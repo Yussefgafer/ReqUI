@@ -1,4 +1,4 @@
-package com.android.bcrgui.parser
+package com.android.requi.parser
 
 import java.util.regex.Pattern
 

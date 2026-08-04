@@ -1,4 +1,4 @@
-package com.android.bcrgui.ui
+package com.android.requi.ui
 
 import android.content.Intent
 import android.net.Uri
@@ -30,7 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.android.bcrgui.preferences.PreferencesManager
+import com.android.requi.preferences.PreferencesManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,7 +80,7 @@ fun OnboardingScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             ) {
                 Text(
-                    text = "BCR Recorder Player",
+                    text = "ReqUI",
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -135,7 +135,7 @@ fun OnboardingScreen(
                         )
 
                         Text(
-                            text = "Basic Call Recorder (BCR) saves audio files inside a directory. Link that folder below so we can index, search, and play your logs.",
+                            text = "ReqUI indexes call recordings from your chosen directory so you can search, filter, and play them easily.",
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,

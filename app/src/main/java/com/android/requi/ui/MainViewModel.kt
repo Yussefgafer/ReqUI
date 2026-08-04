@@ -1,14 +1,14 @@
-package com.android.bcrgui.ui
+package com.android.requi.ui
 
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.android.bcrgui.model.CallRecording
-import com.android.bcrgui.model.RecordingRepository
-import com.android.bcrgui.parser.BcrTemplateParser
-import com.android.bcrgui.player.BcrAudioPlayer
-import com.android.bcrgui.preferences.PreferencesManager
+import com.android.requi.model.CallRecording
+import com.android.requi.model.RecordingRepository
+import com.android.requi.parser.BcrTemplateParser
+import com.android.requi.player.BcrAudioPlayer
+import com.android.requi.preferences.PreferencesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -74,8 +74,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedRecording = MutableStateFlow<CallRecording?>(null)
     val selectedRecording: StateFlow<CallRecording?> = _selectedRecording
 
-    private val _recycledFiles = MutableStateFlow<List<com.android.bcrgui.model.RecycledFile>>(emptyList())
-    val recycledFiles: StateFlow<List<com.android.bcrgui.model.RecycledFile>> = _recycledFiles
+    private val _recycledFiles = MutableStateFlow<List<com.android.requi.model.RecycledFile>>(emptyList())
+    val recycledFiles: StateFlow<List<com.android.requi.model.RecycledFile>> = _recycledFiles
 
     private val _contactNames = MutableStateFlow<List<String>>(emptyList())
     val contactNames: StateFlow<List<String>> = _contactNames

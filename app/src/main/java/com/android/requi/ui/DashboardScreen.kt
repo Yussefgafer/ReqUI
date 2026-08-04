@@ -1,4 +1,4 @@
-package com.android.bcrgui.ui
+package com.android.requi.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -34,7 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
-import com.android.bcrgui.model.CallRecording
+import com.android.requi.model.CallRecording
 import java.util.Locale
 
 private val GitHubIcon: ImageVector
@@ -160,7 +160,7 @@ fun DashboardScreen(
                     } else {
                         Column {
                             Text(
-                                text = "BCR Call Recordings",
+                                text = "ReqUI",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp
                             )
@@ -208,7 +208,7 @@ fun DashboardScreen(
                         IconButton(
                             onClick = {
                                 try {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/ArtRuntime/callrecorder-gui"))
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Yussefgafer/ReqUI"))
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
                                     e.printStackTrace()

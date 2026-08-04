@@ -1,4 +1,4 @@
-package com.android.bcrgui.ui
+package com.android.requi.ui
 
 import android.content.Intent
 import androidx.activity.compose.BackHandler
@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.android.bcrgui.model.CallRecording
+import com.android.requi.model.CallRecording
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)

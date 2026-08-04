@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "BCR GUI"
+rootProject.name = "ReqUI"
 include(":app")

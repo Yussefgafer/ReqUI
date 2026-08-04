@@ -1,4 +1,4 @@
-package com.android.bcrgui.player
+package com.android.requi.player
 
 import android.app.*
 import android.content.Context
@@ -123,7 +123,7 @@ class BcrPlaybackService : Service() {
             this, 3, skipBackwardIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val openActivityIntent = Intent(this, Class.forName("com.android.bcrgui.MainActivity")).apply {
+        val openActivityIntent = Intent(this, Class.forName("com.android.requi.MainActivity")).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val openActivityPending = PendingIntent.getActivity(
@@ -165,13 +165,13 @@ class BcrPlaybackService : Service() {
         const val CHANNEL_ID = "bcr_player_channel"
         const val NOTIFICATION_ID = 2026
 
-        const val ACTION_START = "com.android.bcrgui.action.START"
-        const val ACTION_STOP = "com.android.bcrgui.action.STOP"
-        const val ACTION_UPDATE_STATE = "com.android.bcrgui.action.UPDATE_STATE"
+        const val ACTION_START = "com.android.requi.action.START"
+        const val ACTION_STOP = "com.android.requi.action.STOP"
+        const val ACTION_UPDATE_STATE = "com.android.requi.action.UPDATE_STATE"
 
-        const val ACTION_PLAY_PAUSE = "com.android.bcrgui.action.PLAY_PAUSE"
-        const val ACTION_SKIP_FORWARD = "com.android.bcrgui.action.SKIP_FORWARD"
-        const val ACTION_SKIP_BACKWARD = "com.android.bcrgui.action.SKIP_BACKWARD"
+        const val ACTION_PLAY_PAUSE = "com.android.requi.action.PLAY_PAUSE"
+        const val ACTION_SKIP_FORWARD = "com.android.requi.action.SKIP_FORWARD"
+        const val ACTION_SKIP_BACKWARD = "com.android.requi.action.SKIP_BACKWARD"
 
         const val EXTRA_TITLE = "extra_title"
         const val EXTRA_ARTIST = "extra_artist"

@@ -6,21 +6,21 @@ plugins {
 android {
     signingConfigs {
         create("releaseConfig") {
-            storeFile = file("bcrgui-key.jks")
+            storeFile = file("requi-key.jks")
             storePassword = "awdkljui5454485611"
-            keyAlias = "bcrgui"
+            keyAlias = "requi"
             keyPassword = "awdkljui5454485611"
         }
     }
-    namespace = "com.android.bcrgui"
+    namespace = "com.android.requi"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.android.bcrgui"
+        applicationId = "com.android.requi"
         minSdk = 23
         targetSdk = 37
-        versionCode = 104
-        versionName = "1.0.4"
+        versionCode = 1
+        versionName = "0.1"
         multiDexEnabled = false
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

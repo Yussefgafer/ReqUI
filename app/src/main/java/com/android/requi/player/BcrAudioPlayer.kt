@@ -1,4 +1,4 @@
-package com.android.bcrgui.player
+package com.android.requi.player
 
 import android.content.Context
 import android.content.Intent

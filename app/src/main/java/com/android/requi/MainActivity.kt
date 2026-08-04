@@ -1,4 +1,4 @@
-package com.android.bcrgui
+package com.android.requi
 
 import android.os.Build
 import android.os.Bundle
@@ -11,14 +11,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.android.bcrgui.ui.DashboardScreen
-import com.android.bcrgui.ui.MainViewModel
-import com.android.bcrgui.ui.OnboardingScreen
-import com.android.bcrgui.ui.PlayerSheet
-import com.android.bcrgui.ui.SettingsDialog
-import com.android.bcrgui.ui.theme.BCRGUITheme
+import com.android.requi.ui.DashboardScreen
+import com.android.requi.ui.MainViewModel
+import com.android.requi.ui.OnboardingScreen
+import com.android.requi.ui.PlayerSheet
+import com.android.requi.ui.SettingsDialog
+import com.android.requi.ui.theme.ReqUITheme
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.android.bcrgui.ui.RecycleBinDialog
+import com.android.requi.ui.RecycleBinDialog
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
             val accentColor by viewModel.accentColor.collectAsState()
             val amoledMode by viewModel.amoledMode.collectAsState()
 
-            BCRGUITheme(
+            ReqUITheme(
                 accentColor = accentColor,
                 amoledMode = amoledMode
             ) {

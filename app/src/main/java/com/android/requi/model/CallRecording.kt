@@ -1,4 +1,4 @@
-package com.android.bcrgui.model
+package com.android.requi.model
 
 import android.net.Uri
 
