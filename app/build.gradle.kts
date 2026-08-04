@@ -6,10 +6,19 @@ plugins {
 android {
     signingConfigs {
         create("releaseConfig") {
-            storeFile = file("requi-key.jks")
-            storePassword = "awdkljui5454485611"
-            keyAlias = "requi"
-            keyPassword = "awdkljui5454485611"
+            val keystorePropsFile = File(rootDir, "keystore.properties")
+            val keystoreProps = if (keystorePropsFile.exists()) {
+                keystorePropsFile.readLines()
+                    .filter { it.isNotBlank() && '=' in it }
+                    .associate { line ->
+                        val (k, v) = line.split("=", limit = 2)
+                        k.trim() to v.trim()
+                    }
+            } else emptyMap()
+            storeFile = file(keystoreProps["STORE_FILE"] ?: "requi.jks")
+            storePassword = keystoreProps["STORE_PASSWORD"] ?: (System.getenv("KEYSTORE_PASSWORD") ?: "")
+            keyAlias = keystoreProps["KEY_ALIAS"] ?: (System.getenv("KEY_ALIAS") ?: "requi")
+            keyPassword = keystoreProps["KEY_PASSWORD"] ?: (System.getenv("KEY_PASSWORD") ?: "")
         }
     }
     namespace = "com.android.requi"
@@ -36,7 +45,7 @@ android {
             )
         }
         debug {
-            signingConfig = signingConfigs.getByName("releaseConfig")
+            // Signed with the default debug keystore; only release uses releaseConfig.
         }
     }
     compileOptions {

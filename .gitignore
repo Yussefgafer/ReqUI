@@ -34,3 +34,6 @@ as3_dump.txt
 .DS_Store
 Thumbs.db
 local.properties
+keystore.properties
+*.jks
+*.hprof
