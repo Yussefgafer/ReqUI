@@ -2,6 +2,7 @@
 
 A modern, fast, and feature-rich Material 3 companion player GUI for Basic Call Recorder (BCR) on Android. Designed with premium aesthetics, edge-to-edge screens, fluid animations, and robust system integration.
 
+Forked from ![https://github.com/ArtRuntime/callrecorder-gui](ArtRuntime/callrecorder-gui)
 ---
 
 ## Screenshots
