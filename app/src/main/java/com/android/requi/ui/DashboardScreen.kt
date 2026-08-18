@@ -37,45 +37,6 @@ import androidx.compose.ui.window.PopupProperties
 import com.android.requi.model.CallRecording
 import java.util.Locale
 
-private val GitHubIcon: ImageVector
-    get() = ImageVector.Builder(
-        name = "GitHub",
-        defaultWidth = 24.dp,
-        defaultHeight = 24.dp,
-        viewportWidth = 24f,
-        viewportHeight = 24f
-    ).apply {
-        path(fill = SolidColor(Color.Black)) {
-            moveTo(12f, 2f)
-            curveTo(6.477f, 2f, 2f, 6.477f, 2f, 12f)
-            curveTo(2f, 16.42f, 4.87f, 20.17f, 8.84f, 21.5f)
-            curveTo(9.34f, 21.58f, 9.5f, 21.27f, 9.5f, 21.0f)
-            curveTo(9.5f, 20.77f, 9.5f, 20.0f, 9.5f, 19.14f)
-            curveTo(6.72f, 19.74f, 6.13f, 18.15f, 6.13f, 18.15f)
-            curveTo(5.68f, 17.0f, 5.03f, 16.7f, 5.03f, 16.7f)
-            curveTo(4.12f, 16.08f, 5.1f, 16.1f, 5.1f, 16.1f)
-            curveTo(6.1f, 16.17f, 6.63f, 17.13f, 6.63f, 17.13f)
-            curveTo(7.53f, 18.66f, 8.97f, 18.22f, 9.54f, 17.97f)
-            curveTo(9.63f, 17.32f, 9.89f, 16.88f, 10.18f, 16.63f)
-            curveTo(7.96f, 16.38f, 5.63f, 15.52f, 5.63f, 11.69f)
-            curveTo(5.63f, 10.6f, 6.02f, 9.7f, 6.66f, 9.0f)
-            curveTo(6.56f, 8.75f, 6.21f, 7.73f, 6.76f, 6.35f)
-            curveTo(6.76f, 6.35f, 7.6f, 6.08f, 9.5f, 7.37f)
-            curveTo(10.3f, 7.15f, 11.15f, 7.04f, 12f, 7.04f)
-            curveTo(12.85f, 7.04f, 13.7f, 7.15f, 14.5f, 7.37f)
-            curveTo(16.4f, 6.08f, 17.24f, 6.35f, 17.24f, 6.35f)
-            curveTo(17.79f, 7.73f, 17.44f, 8.75f, 17.34f, 9.0f)
-            curveTo(17.98f, 9.7f, 18.37f, 10.6f, 18.37f, 11.69f)
-            curveTo(18.37f, 15.53f, 16.04f, 16.38f, 13.81f, 16.63f)
-            curveTo(14.17f, 16.94f, 14.5f, 17.56f, 14.5f, 18.51f)
-            curveTo(14.5f, 19.87f, 14.5f, 20.97f, 14.5f, 21.3f)
-            curveTo(14.5f, 21.57f, 14.66f, 21.89f, 15.17f, 21.79f)
-            curveTo(19.14f, 20.46f, 22f, 16.71f, 22f, 12f)
-            curveTo(22f, 6.477f, 17.52f, 2f, 12f, 2f)
-            close()
-        }
-    }.build()
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
@@ -100,6 +61,7 @@ fun DashboardScreen(
     var showDeleteConfirmDialog by remember { mutableStateOf<CallRecording?>(null) }
     var contextMenuRecording by remember { mutableStateOf<CallRecording?>(null) }
     var showFilterBottomSheet by remember { mutableStateOf(false) }
+    var isSearchExpanded by remember { mutableStateOf(false) }
 
     var selectedRecordings by remember { mutableStateOf(emptySet<CallRecording>()) }
     val isMultiSelectMode = selectedRecordings.isNotEmpty()
@@ -151,6 +113,7 @@ fun DashboardScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
+                modifier = Modifier.heightIn(min = 48.dp, max = 56.dp),
                 title = {
                     if (isMultiSelectMode) {
                         Text(
@@ -206,21 +169,6 @@ fun DashboardScreen(
                             )
                         }
                     } else {
-                        IconButton(
-                            onClick = {
-                                try {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Yussefgafer/ReqUI"))
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = GitHubIcon,
-                                contentDescription = "GitHub Repository"
-                            )
-                        }
                         IconButton(onClick = onOpenRecycleBin) {
                             Icon(imageVector = Icons.Default.Delete, contentDescription = "Recycle Bin")
                         }
@@ -249,45 +197,73 @@ fun DashboardScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = if (isSearchExpanded) Arrangement.spacedBy(8.dp) else Arrangement.End
                 ) {
-                    // Search Input - Circular and premium
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { viewModel.setSearchQuery(it) },
-                        placeholder = { Text("Search recordings...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.setSearchQuery("") }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(28.dp),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                        )
-                    )
-
-                    // Filter Icon Button with badge if any filters are active
                     val hasActiveFilters = directionFilter != "all" || simFilter != null || dateFilter != "all" || durationFilter != "all"
                     val activeFiltersCount = (if (directionFilter != "all") 1 else 0) +
                             (if (simFilter != null) 1 else 0) +
                             (if (dateFilter != "all") 1 else 0) +
                             (if (durationFilter != "all") 1 else 0)
 
+                    if (isSearchExpanded) {
+                        // Search Input - Circular and premium (expanded)
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { viewModel.setSearchQuery(it) },
+                            placeholder = { Text("Search recordings...") },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { viewModel.setSearchQuery("") }) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .heightIn(min = 44.dp),
+                            shape = RoundedCornerShape(28.dp),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                            )
+                        )
+
+                        IconButton(
+                            onClick = {
+                                isSearchExpanded = false
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        // Collapsed: just a search icon to expand
+                        IconButton(
+                            onClick = { isSearchExpanded = true },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    // Filter Icon Button with badge if any filters are active
                     IconButton(
                         onClick = { showFilterBottomSheet = true },
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(40.dp)
                             .background(
                                 if (hasActiveFilters) MaterialTheme.colorScheme.primaryContainer
                                 else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
@@ -970,7 +946,7 @@ fun RecordingItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -984,12 +960,12 @@ fun RecordingItem(
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
             }
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Left Icon Avatar
@@ -1007,7 +983,7 @@ fun RecordingItem(
             Box(contentAlignment = Alignment.Center) {
                 Box(
                     modifier = Modifier
-                        .size(46.dp)
+                    .size(40.dp)
                         .clip(CircleShape)
                         .background(
                             if (isChecked) {
@@ -1025,27 +1001,27 @@ fun RecordingItem(
                             imageVector = Icons.Default.Check,
                             contentDescription = "Selected",
                             tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     } else if (isPlaying) {
                         Icon(
                             imageVector = Icons.Default.VolumeUp,
                             contentDescription = "Playing",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     } else {
                         Icon(
                             imageVector = directionIcon,
                             contentDescription = null,
                             tint = directionColor,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             // Center details
             Column(
@@ -1054,7 +1030,7 @@ fun RecordingItem(
                 Text(
                     text = recording.resolvedName,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
+                    fontSize = 14.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -1098,12 +1074,12 @@ fun RecordingItem(
                 }
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
 
             // Right Info (SIM details, duration, size)
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
