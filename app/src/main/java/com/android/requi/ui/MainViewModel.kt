@@ -2,6 +2,8 @@ package com.android.requi.ui
 
 import android.app.Application
 import android.net.Uri
+import android.content.Intent
+import android.provider.DocumentsContract
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.requi.model.CallRecording
@@ -46,6 +48,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _rawRecordings = MutableStateFlow<List<CallRecording>>(emptyList())
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
+    private val _loadError = MutableStateFlow<String?>(null)
+    val loadError: StateFlow<String?> = _loadError
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
@@ -275,19 +279,115 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    init {
-        loadContacts()
-        loadRecycledFiles()
-        if (prefs.isOnboardingCompleted && !prefs.folderUri.isNullOrEmpty()) {
+init {
+    loadContacts()
+    loadRecycledFiles()
+    // Only surface the dashboard if onboarding finished AND the persisted SAF grant for
+    // the folder is still valid. A persisted grant can be lost after "clear data",
+    // reinstall, or OS revocation, leaving the folder inaccessible. In that case route
+    // the user back to onboarding to re-link the folder instead of showing a silent
+    // empty dashboard with a misleading message.
+    if (prefs.isOnboardingCompleted && !prefs.folderUri.isNullOrEmpty()) {
+        if (hasPersistedFolderPermission()) {
             loadRecordings()
+        } else {
+            _isOnboardingCompleted.value = false
+            prefs.isOnboardingCompleted = false
+        }
+    }
+}
+
+/**
+ * Returns true when the app still holds a persisted SAF read/write grant for the
+ * currently configured folder URI. This is the canonical way to detect a still-valid
+ * persisted Storage Access Framework permission. A null folder means there is nothing
+ * to check, which is treated as "no permission".
+ */
+private fun hasPersistedFolderPermission(): Boolean {
+    val folderUriStr = _folderUri.value ?: return false
+    val folder = Uri.parse(folderUriStr)
+    return getApplication<Application>().contentResolver.persistedUriPermissions
+        .any { it.uri == folder }
+}
+
+    /**
+     * Releases any persisted SAF read/write grant the app holds for the given folder URI.
+     * Called when the user re-links to a different folder so stale persisted grants do not
+     * accumulate (Android caps the total number of persisted URI permissions per app).
+     */
+    private fun releaseOldFolderPermission(oldFolderUri: String?) {
+        if (oldFolderUri.isNullOrBlank()) return
+        try {
+            val uri = Uri.parse(oldFolderUri)
+            val cr = getApplication<Application>().contentResolver
+            cr.releasePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
+    /**
+     * Validates that the folder identified by the given persisted-URI string is still accessible.
+     * Re-takes the persistable grant (idempotent) and probes a child-document query to confirm
+     * the tree can actually be read. Used by onboarding before marking a folder "Connected".
+     */
+    fun isFolderAccessible(folderUriStr: String?): Boolean {
+        if (folderUriStr.isNullOrBlank()) return false
+        val uri = Uri.parse(folderUriStr)
+        return try {
+            val cr = getApplication<Application>().contentResolver
+            val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            cr.takePersistableUriPermission(uri, takeFlags)
+            val docId = DocumentsContract.getTreeDocumentId(uri)
+            val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, docId)
+            cr.query(childrenUri, arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID), null, null, null)?.use { it.moveToFirst() || true } ?: false
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    fun saveSettings(folder: String?, template: String, extension: String, accent: String, amoled: Boolean) {
+        val oldFolder = _folderUri.value
+        prefs.folderUri = folder
+        prefs.filenameTemplate = template
+        prefs.fileExtension = extension
+        prefs.accentColor = accent
+        prefs.amoledMode = amoled
+
+        _folderUri.value = folder
+        _filenameTemplate.value = template
+        _fileExtension.value = extension
+        _accentColor.value = accent
+        _amoledMode.value = amoled
+
+        if (oldFolder != folder) {
+            releaseOldFolderPermission(oldFolder)
+        }
+
+        loadRecordings()
+    }
+
     fun loadRecordings() {
+        _loadError.value = null
         val folder = _folderUri.value ?: return
+
+        // The persisted SAF grant may have been revoked while the app was running
+        // (e.g. via system settings). If it is gone, route the user back to onboarding
+        // to re-link the folder instead of silently presenting an empty dashboard.
+        if (!hasPersistedFolderPermission()) {
+            _isOnboardingCompleted.value = false
+            prefs.isOnboardingCompleted = false
+            _isLoading.value = false
+            return
+        }
+
         val template = _filenameTemplate.value
         val ext = _fileExtension.value
-
         viewModelScope.launch {
             _isLoading.value = true
             try {
@@ -311,27 +411,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _rawRecordings.value = list
             } catch (e: Exception) {
                 e.printStackTrace()
+                _loadError.value = "Failed to load recordings: ${e.localizedMessage ?: e.message ?: "unknown error"}"
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    fun saveSettings(folder: String?, template: String, extension: String, accent: String, amoled: Boolean) {
-        prefs.folderUri = folder
-        prefs.filenameTemplate = template
-        prefs.fileExtension = extension
-        prefs.accentColor = accent
-        prefs.amoledMode = amoled
-
-        _folderUri.value = folder
-        _filenameTemplate.value = template
-        _fileExtension.value = extension
-        _accentColor.value = accent
-        _amoledMode.value = amoled
-
-        loadRecordings()
+    fun clearLoadError() {
+        _loadError.value = null
     }
+
 
     fun completeOnboarding(folder: String, template: String, extension: String) {
         saveSettings(folder, template, extension, PreferencesManager.DEFAULT_ACCENT_COLOR, false)
@@ -340,7 +430,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resetOnboarding() {
+        val oldFolder = _folderUri.value
         prefs.clear()
+        if (oldFolder != null) {
+            releaseOldFolderPermission(oldFolder)
+        }
         _folderUri.value = null
         _filenameTemplate.value = PreferencesManager.DEFAULT_TEMPLATE
         _fileExtension.value = PreferencesManager.DEFAULT_EXTENSION
@@ -417,7 +511,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (_selectedRecording.value?.uri == recording.uri) {
                     selectRecording(null)
                 }
-                loadRecordings()
+                _rawRecordings.value = _rawRecordings.value.filter { it.uri != recording.uri }
                 loadRecycledFiles()
             }
         }

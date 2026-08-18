@@ -49,21 +49,6 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        // Request notification permission for API >= 33
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val hasNotificationPermission = androidx.core.content.ContextCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.POST_NOTIFICATIONS
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-            if (!hasNotificationPermission) {
-                androidx.core.app.ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
-                    101
-                )
-            }
-        }
-
         setContent {
             val accentColor by viewModel.accentColor.collectAsState()
             val amoledMode by viewModel.amoledMode.collectAsState()
@@ -76,6 +61,14 @@ class MainActivity : ComponentActivity() {
                 val folderUri by viewModel.folderUri.collectAsState()
                 val filenameTemplate by viewModel.filenameTemplate.collectAsState()
                 val fileExtension by viewModel.fileExtension.collectAsState()
+                // Lazily request notification permission the first time a recording is selected
+                // (i.e. the user actually starts playback), not at launch.
+                val selectedRecording by viewModel.selectedRecording.collectAsState()
+                LaunchedEffect(selectedRecording) {
+                    if (selectedRecording != null) {
+                        requestNotificationPermissionIfNeeded()
+                    }
+                }
 
                 var showSettings by remember { mutableStateOf(false) }
                 var showRecycleBin by remember { mutableStateOf(false) }
@@ -128,6 +121,27 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Requests POST_NOTIFICATIONS permission if not already granted.
+     * Invoked lazily on first Play (see PlayerSheet), not at launch, to avoid
+     * an unexplained permission prompt on first open.
+     */
+    fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasNotificationPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (!hasNotificationPermission) {
+                androidx.core.app.ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                    101
+                )
             }
         }
     }

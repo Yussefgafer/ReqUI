@@ -37,3 +37,5 @@ local.properties
 keystore.properties
 *.jks
 *.hprof
+QWEN.md
+AGENTS.md

@@ -23,7 +23,9 @@ class BcrPlaybackService : Service() {
         // Fetch session token directly from player singleton
         sessionToken = BcrAudioPlayer.instance?.mediaSession?.sessionToken
         // Start foreground immediately inside onCreate to strictly satisfy OS start times and prevent crashes
-        val placeholder = buildNotification("Call Recording", "", false, sessionToken)
+        val realTitle = BcrAudioPlayer.instance?.currentTitle?.takeIf { it.isNotBlank() } ?: "Preparing playback"
+        val realArtist = BcrAudioPlayer.instance?.currentArtist?.takeIf { it.isNotBlank() } ?: ""
+        val placeholder = buildNotification(realTitle, realArtist, false, sessionToken)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, placeholder, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
         } else {

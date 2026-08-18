@@ -94,6 +94,7 @@ fun DashboardScreen(
     val contactNames by viewModel.contactNames.collectAsState()
     val selectedRecording by viewModel.selectedRecording.collectAsState()
     val customStartDate by viewModel.customStartDate.collectAsState()
+    val loadError by viewModel.loadError.collectAsState()
     val customEndDate by viewModel.customEndDate.collectAsState()
 
     var showDeleteConfirmDialog by remember { mutableStateOf<CallRecording?>(null) }
@@ -432,6 +433,28 @@ fun DashboardScreen(
                         ) {
                             if (isLoading) {
                                 CircularProgressIndicator()
+                            } else if (loadError != null) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Warning,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(48.dp),
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                    Text(
+                                        text = loadError ?: "",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.error,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        modifier = Modifier.padding(horizontal = 24.dp)
+                                    )
+                                    Button(onClick = { viewModel.loadRecordings() }) {
+                                        Text("Retry")
+                                    }
+                                }
                             } else {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -461,7 +484,10 @@ fun DashboardScreen(
                     } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(vertical = 8.dp),
+                            contentPadding = PaddingValues(
+                                top = 8.dp,
+                                bottom = if (selectedRecording != null) 96.dp else 8.dp
+                            ),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(recordings) { rec ->

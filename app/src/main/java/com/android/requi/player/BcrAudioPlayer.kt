@@ -35,6 +35,9 @@ class BcrAudioPlayer(private val context: Context) {
     private var activeTitle = ""
     private var activeArtist = ""
 
+    val currentTitle: String get() = activeTitle
+    val currentArtist: String get() = activeArtist
+
     var mediaSession: MediaSession? = null
 
     companion object {
@@ -173,37 +176,52 @@ class BcrAudioPlayer(private val context: Context) {
         try {
             val mp = MediaPlayer().apply {
                 setDataSource(context, uri)
-                prepare()
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    try {
-                        playbackParams = PlaybackParams().apply { speed = _playbackSpeed.value }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+                setOnPreparedListener {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        try {
+                            playbackParams = PlaybackParams().apply { speed = _playbackSpeed.value }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                     }
+
+                    start()
+
+                    _isPlaying.value = true
+                    _duration.value = duration.toLong()
+                    _currentPosition.value = 0L
+
+                    updateMetadata(title, artist, duration.toLong())
+                    updatePlaybackState()
+                    startService()
+
+                    handler.post(updateProgressAction)
+                }
+
+                setOnErrorListener { _, _, _ ->
+                    _isPlaying.value = false
+                    true
                 }
 
                 setOnCompletionListener {
                     _isPlaying.value = false
                     _currentPosition.value = _duration.value
+                    try {
+                        this.seekTo(0)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                    _currentPosition.value = 0L
                     updatePlaybackState()
                     updateServiceState()
                     handler.removeCallbacks(updateProgressAction)
                 }
+
+                prepareAsync()
             }
 
             mediaPlayer = mp
-            mp.start()
-
-            _isPlaying.value = true
-            _duration.value = mp.duration.toLong()
-            _currentPosition.value = 0L
-
-            updateMetadata(title, artist, mp.duration.toLong())
-            updatePlaybackState()
-            startService()
-
-            handler.post(updateProgressAction)
         } catch (e: Exception) {
             e.printStackTrace()
             _isPlaying.value = false
