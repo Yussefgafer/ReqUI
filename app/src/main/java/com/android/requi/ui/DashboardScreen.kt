@@ -1134,12 +1134,21 @@ fun RecordingItem(
                     }
                 }
 
-                Text(
-                    text = formatDuration(recording.durationMs),
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                if (recording.isDurationLoaded) {
+                    Text(
+                        text = formatDuration(recording.durationMs),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                } else {
+                    Text(
+                        text = "…",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
                 Text(
                     text = formatSize(recording.size),
                     fontSize = 10.sp,

@@ -11,6 +11,9 @@ import com.android.requi.model.RecordingRepository
 import com.android.requi.parser.BcrTemplateParser
 import com.android.requi.player.BcrAudioPlayer
 import com.android.requi.preferences.PreferencesManager
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -85,6 +88,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val contactNames: StateFlow<List<String>> = _contactNames
 
     private var contactsMap = emptyMap<String, String>()
+    private var durationLoadJob: kotlinx.coroutines.Job? = null
 
     // Combine filters and search query with raw recordings
     @Suppress("UNCHECKED_CAST")
@@ -374,6 +378,7 @@ private fun hasPersistedFolderPermission(): Boolean {
 
     fun loadRecordings() {
         _loadError.value = null
+        durationLoadJob?.cancel()
         val folder = _folderUri.value ?: return
 
         // The persisted SAF grant may have been revoked while the app was running
@@ -409,6 +414,42 @@ private fun hasPersistedFolderPermission(): Boolean {
                     }
                 }
                 _rawRecordings.value = list
+
+                // Enrich durations in the background, in batches of 25, updating the list progressively.
+                durationLoadJob = viewModelScope.launch {
+                    val initialList = list
+                    var working = initialList
+                    val batchSize = 25
+                    var index = 0
+                    while (index < working.size) {
+                        val end = (index + batchSize).coerceAtMost(working.size)
+                        // Load durations for this batch on IO
+                        val batchResults = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            (index until end).map { i ->
+                                val rec = working[i]
+                                if (!rec.isDurationLoaded) {
+                                    val d = repository.loadDuration(rec.uri)
+                                    rec.copy(durationMs = d, isDurationLoaded = true)
+                                } else {
+                                    rec
+                                }
+                            }
+                        }
+                        // Apply batch to the current list atomically
+                        val current = _rawRecordings.value
+                        val updated = current.map { cur ->
+                            val matched = batchResults.firstOrNull { it.uri == cur.uri }
+                            matched ?: cur
+                        }
+                        // Only publish if the list identity/contents still match (folder not changed)
+                        if (current.size == working.size) {
+                            _rawRecordings.value = updated
+                        }
+                        working = updated
+                        delay(40)
+                        index = end
+                    }
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 _loadError.value = "Failed to load recordings: ${e.localizedMessage ?: e.message ?: "unknown error"}"

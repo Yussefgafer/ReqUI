@@ -14,6 +14,11 @@ class RecordingRepository(private val context: Context) {
 
     /**
      * Scans the given SAF Tree Uri and returns a parsed list of call recordings.
+     *
+     * This is the fast scan path: it builds [CallRecording] objects from the SAF document
+     * index and filename/JSON metadata without touching [MediaMetadataRetriever]. Durations
+     * are enriched later, per-uri, via [loadDuration] (invoked by the ViewModel in the
+     * background). JSON-embedded durations are applied immediately.
      */
     suspend fun getRecordings(
         folderUriStr: String,
@@ -147,10 +152,9 @@ class RecordingRepository(private val context: Context) {
                 }
             }
 
-            // Fallback for duration using metadata retriever if not in json
-            if (durationMs <= 0L) {
-                durationMs = retrieveDuration(audioDoc.uri)
-            }
+            // Duration is taken from JSON metadata only here; the MediaMetadataRetriever
+            // fallback is deferred to loadDuration() which the ViewModel calls in the background.
+            val jsonHasDuration = durationMs > 0L
 
             CallRecording(
                 uri = audioDoc.uri,
@@ -165,6 +169,7 @@ class RecordingRepository(private val context: Context) {
                 callerName = callerName,
                 callLogName = callLogName,
                 durationMs = durationMs,
+                isDurationLoaded = jsonHasDuration,
                 hasMetadataJson = true,
                 packageName = packageName
             )
@@ -176,7 +181,9 @@ class RecordingRepository(private val context: Context) {
 
     private fun parseFilenameMetadata(audioDoc: DocInfo, parser: BcrTemplateParser): CallRecording {
         val meta = parser.parseFilename(audioDoc.name)
-        val durationMs = retrieveDuration(audioDoc.uri)
+        // Duration is deferred: the MediaMetadataRetriever lookup is performed later in the
+        // background via loadDuration() (invoked per-uri by the ViewModel).
+        val durationMs = 0L
 
         return CallRecording(
             uri = audioDoc.uri,
@@ -191,6 +198,7 @@ class RecordingRepository(private val context: Context) {
             callerName = meta.callerName,
             callLogName = meta.callLogName,
             durationMs = durationMs,
+            isDurationLoaded = false,
             hasMetadataJson = false
         )
     }
@@ -214,6 +222,13 @@ class RecordingRepository(private val context: Context) {
             }
         }
     }
+
+    /**
+     * Public per-uri duration loader. Retrieves the media duration via
+     * [MediaMetadataRetriever] for a single recording, to be called from the
+     * background (batched by the ViewModel) after the fast [getRecordings] scan.
+     */
+    fun loadDuration(uri: Uri): Long = retrieveDuration(uri)
 
     private fun formatTimestamp(timestamp: Long): String {
         return try {

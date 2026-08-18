@@ -15,6 +15,7 @@ data class CallRecording(
     val callerName: String?,
     val callLogName: String?,
     val durationMs: Long,
+    val isDurationLoaded: Boolean = false,
     val hasMetadataJson: Boolean,
     val packageName: String? = null
 ) {
