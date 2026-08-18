@@ -61,7 +61,6 @@ fun DashboardScreen(
     var showDeleteConfirmDialog by remember { mutableStateOf<CallRecording?>(null) }
     var contextMenuRecording by remember { mutableStateOf<CallRecording?>(null) }
     var showFilterBottomSheet by remember { mutableStateOf(false) }
-    var isSearchExpanded by remember { mutableStateOf(false) }
 
     var selectedRecordings by remember { mutableStateOf(emptySet<CallRecording>()) }
     val isMultiSelectMode = selectedRecordings.isNotEmpty()
@@ -184,8 +183,7 @@ fun DashboardScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent
-                ),
-                windowInsets = WindowInsets(0.dp)
+                )
             )
         }
     ) { innerPadding ->
@@ -203,73 +201,45 @@ fun DashboardScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = if (isSearchExpanded) Arrangement.spacedBy(8.dp) else Arrangement.End
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // Search Input - Circular and premium
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.setSearchQuery(it) },
+                        placeholder = { Text("Search recordings...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.setSearchQuery("") }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(28.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                        )
+                    )
+
+                    // Filter Icon Button with badge if any filters are active
                     val hasActiveFilters = directionFilter != "all" || simFilter != null || dateFilter != "all" || durationFilter != "all"
                     val activeFiltersCount = (if (directionFilter != "all") 1 else 0) +
                             (if (simFilter != null) 1 else 0) +
                             (if (dateFilter != "all") 1 else 0) +
                             (if (durationFilter != "all") 1 else 0)
 
-                    if (isSearchExpanded) {
-                        // Search Input - Circular and premium (expanded)
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { viewModel.setSearchQuery(it) },
-                            placeholder = { Text("Search recordings...") },
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                            trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = { viewModel.setSearchQuery("") }) {
-                                        Icon(Icons.Default.Clear, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 44.dp),
-                            shape = RoundedCornerShape(28.dp),
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                            )
-                        )
-
-                        IconButton(
-                            onClick = {
-                                isSearchExpanded = false
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Close search",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    } else {
-                        // Collapsed: just a search icon to expand
-                        IconButton(
-                            onClick = { isSearchExpanded = true },
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-
-                    // Filter Icon Button with badge if any filters are active
                     IconButton(
                         onClick = { showFilterBottomSheet = true },
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(48.dp)
                             .background(
                                 if (hasActiveFilters) MaterialTheme.colorScheme.primaryContainer
                                 else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
