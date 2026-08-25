@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -57,6 +58,7 @@ fun DashboardScreen(
     val customStartDate by viewModel.customStartDate.collectAsState()
     val loadError by viewModel.loadError.collectAsState()
     val customEndDate by viewModel.customEndDate.collectAsState()
+    val bulkDeleteProgress by viewModel.bulkDeleteProgress.collectAsState()
 
     var showDeleteConfirmDialog by remember { mutableStateOf<CallRecording?>(null) }
     var contextMenuRecording by remember { mutableStateOf<CallRecording?>(null) }
@@ -65,6 +67,10 @@ fun DashboardScreen(
     var selectedRecordings by remember { mutableStateOf(emptySet<CallRecording>()) }
     val isMultiSelectMode = selectedRecordings.isNotEmpty()
     var showDeleteMultipleConfirmDialog by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = isMultiSelectMode) {
+        selectedRecordings = emptySet()
+    }
 
     val context = LocalContext.current
     val contactsPermissionLauncher = rememberLauncherForActivityResult(
@@ -408,28 +414,68 @@ fun DashboardScreen(
                                     }
                                 }
                             } else {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Inbox,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(48.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                    )
-                                    Text(
-                                        text = "No Recordings Found",
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = "Verify your selected folder and filename template.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                        modifier = Modifier.padding(horizontal = 24.dp)
-                                    )
+                                val filtersActive = searchQuery.isNotBlank() || directionFilter != "all" || simFilter != null ||
+                                        dateFilter != "all" || durationFilter != "all" || contactFilter.isNotEmpty()
+                                if (filtersActive) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.FilterListOff,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(48.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                        )
+                                        Text(
+                                            text = "No Matching Recordings",
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = "Try adjusting or clearing your filters.",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                            modifier = Modifier.padding(horizontal = 24.dp)
+                                        )
+                                        TextButton(
+                                            onClick = {
+                                                viewModel.setSearchQuery("")
+                                                viewModel.setDirectionFilter("all")
+                                                viewModel.setSimFilter(null)
+                                                viewModel.setDateFilter("all")
+                                                viewModel.setDurationFilter("all")
+                                                viewModel.clearContactFilters()
+                                            }
+                                        ) {
+                                            Text("Clear All Filters")
+                                        }
+                                    }
+                                } else {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Inbox,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(48.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                        )
+                                        Text(
+                                            text = "No Recordings Found",
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = "Verify your selected folder and filename template.",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                            modifier = Modifier.padding(horizontal = 24.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -529,9 +575,7 @@ fun DashboardScreen(
                     confirmButton = {
                         TextButton(
                             onClick = {
-                                selectedRecordings.forEach { rec ->
-                                    viewModel.deleteRecording(rec)
-                                }
+                                viewModel.bulkDeleteRecordings(selectedRecordings)
                                 selectedRecordings = emptySet()
                                 showDeleteMultipleConfirmDialog = false
                             },
@@ -542,6 +586,33 @@ fun DashboardScreen(
                     },
                     dismissButton = {
                         TextButton(onClick = { showDeleteMultipleConfirmDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
+
+            // Bulk Delete Progress Dialog (blocking while the batch runs)
+            bulkDeleteProgress?.let { progress ->
+                val (done, total) = progress
+                AlertDialog(
+                    onDismissRequest = { viewModel.cancelBulkDelete() },
+                    title = { Text("Deleting Recordings") },
+                    text = {
+                        Column {
+                            Text("Deleting $done of $total…")
+                            Spacer(modifier = Modifier.height(16.dp))
+                            LinearProgressIndicator(
+                                progress = {
+                                    if (total > 0) done.toFloat() / total else 0f
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    },
+                    confirmButton = {},
+                    dismissButton = {
+                        TextButton(onClick = { viewModel.cancelBulkDelete() }) {
                             Text("Cancel")
                         }
                     }

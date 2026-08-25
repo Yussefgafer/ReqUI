@@ -1,3 +1,11 @@
+# Unreleased
+- UX: pressing Back during multi-select now clears the selection instead of closing the app.
+- UX: empty state now distinguishes "no recordings at all" from "no filter matches", with a one-tap "Clear All Filters" action in the latter.
+- UX: multi-select delete now runs sequentially with a progress dialog (N of M, cancellable) instead of firing all deletions at once with no feedback.
+- Performance: search input is debounced and the filter pipeline runs off the main thread (`Dispatchers.Default`).
+- Performance: recycle-bin operations (list, permanent delete, empty bin) no longer perform disk I/O on the main thread.
+- Performance: per-row date formatting is computed once and cached, removing repeated `SimpleDateFormat` construction while scrolling.
+
 # v0.1
 - Initial release and rebranding.
 

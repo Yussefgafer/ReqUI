@@ -43,9 +43,13 @@ data class CallRecording(
 
     /**
      * Formats the raw call date string into a user-friendly format showing local date and time.
+     *
+     * Cached with `by lazy`: read for every visible list row on every recomposition, and
+     * constructing SimpleDateFormat on each access caused measurable CPU/GC pressure.
+     * Lazy delegates don't participate in equals/hashCode/copy, so data-class semantics are unchanged.
      */
-    val formattedDateTime: String
-        get() {
+    val formattedDateTime: String by lazy {
+        fun compute(): String { // local fun: `return` isn't allowed directly in a lazy lambda
             if (date != null) {
                 try {
                     val parser = java.text.SimpleDateFormat("yyyyMMdd_HHmmss.SSSZ", java.util.Locale.getDefault())
@@ -67,6 +71,8 @@ data class CallRecording(
             val formatter = java.text.SimpleDateFormat("MMM d, yyyy • h:mm a", java.util.Locale.getDefault())
             return formatter.format(java.util.Date(lastModified))
         }
+        compute()
+    }
 }
 
 data class RecycledFile(

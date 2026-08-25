@@ -369,13 +369,13 @@ class RecordingRepository(private val context: Context) {
         }
     }
 
-    fun getRecycledRecordings(template: String, contactsMap: Map<String, String>): List<RecycledFile> {
+    suspend fun getRecycledRecordings(template: String, contactsMap: Map<String, String>): List<RecycledFile> = withContext(Dispatchers.IO) {
         val recycleBinDir = File(context.filesDir, "recycle_bin")
-        if (!recycleBinDir.exists()) return emptyList()
+        if (!recycleBinDir.exists()) return@withContext emptyList()
 
         val templateParser = BcrTemplateParser(template, "all")
 
-        return recycleBinDir.listFiles { _, name -> !name.endsWith(".json") }?.map { file ->
+        return@withContext recycleBinDir.listFiles { _, name -> !name.endsWith(".json") }?.map { file ->
             var contactName: String? = null
             var phoneNumber: String? = null
 
@@ -428,13 +428,13 @@ class RecordingRepository(private val context: Context) {
         } ?: emptyList()
     }
 
-    fun emptyRecycleBin(): Boolean {
+    suspend fun emptyRecycleBin(): Boolean = withContext(Dispatchers.IO) {
         val recycleBinDir = File(context.filesDir, "recycle_bin")
-        if (!recycleBinDir.exists()) return true
-        return recycleBinDir.deleteRecursively()
+        if (!recycleBinDir.exists()) return@withContext true
+        return@withContext recycleBinDir.deleteRecursively()
     }
 
-    fun deletePermanently(fileName: String): Boolean {
+    suspend fun deletePermanently(fileName: String): Boolean = withContext(Dispatchers.IO) {
         val recycleBinDir = File(context.filesDir, "recycle_bin")
         val audioFile = File(recycleBinDir, fileName)
         var success = true
@@ -447,7 +447,7 @@ class RecordingRepository(private val context: Context) {
         if (jsonFile.exists()) {
             success = jsonFile.delete() && success
         }
-        return success
+        return@withContext success
     }
 
     private data class DocInfo(

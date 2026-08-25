@@ -15,10 +15,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -87,14 +90,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _contactNames = MutableStateFlow<List<String>>(emptyList())
     val contactNames: StateFlow<List<String>> = _contactNames
 
+    private val _bulkDeleteProgress = MutableStateFlow<Pair<Int, Int>?>(null)
+    val bulkDeleteProgress: StateFlow<Pair<Int, Int>?> = _bulkDeleteProgress
+    private var bulkDeleteJob: Job? = null
+
     private var contactsMap = emptyMap<String, String>()
     private var durationLoadJob: kotlinx.coroutines.Job? = null
+
+    // Debounce keystrokes so the full-list filter doesn't re-run per character; a blank
+    // query bypasses debounce (selector returns 0) so clearing the search is instant.
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    private val debouncedSearchQuery = _searchQuery.debounce { query ->
+        if (query.isBlank()) 0L else 250L
+    }
 
     // Combine filters and search query with raw recordings
     @Suppress("UNCHECKED_CAST")
     val recordings: StateFlow<List<CallRecording>> = combine(
         _rawRecordings,
-        _searchQuery,
+        debouncedSearchQuery,
         _directionFilter,
         _simFilter,
         _durationFilter,
@@ -180,7 +194,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         list
-    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     // Player State Flows delegated from audioPlayer
     val isPlaying: StateFlow<Boolean> = audioPlayer.isPlaying
@@ -556,6 +572,37 @@ private fun hasPersistedFolderPermission(): Boolean {
                 loadRecycledFiles()
             }
         }
+    }
+
+    fun bulkDeleteRecordings(recordings: Collection<CallRecording>) {
+        if (recordings.isEmpty()) return
+        bulkDeleteJob?.cancel()
+        bulkDeleteJob = viewModelScope.launch {
+            val folder = _folderUri.value ?: return@launch
+            val items = recordings.toList()
+            val total = items.size
+            _bulkDeleteProgress.value = 0 to total
+            var done = 0
+            for (rec in items) {
+                if (!isActive) break
+                val success = repository.deleteRecording(folder, rec)
+                if (success) {
+                    if (_selectedRecording.value?.uri == rec.uri) {
+                        selectRecording(null)
+                    }
+                    _rawRecordings.value = _rawRecordings.value.filter { it.uri != rec.uri }
+                }
+                done++
+                _bulkDeleteProgress.value = done to total
+            }
+            loadRecycledFiles()
+            _bulkDeleteProgress.value = null
+        }
+    }
+
+    fun cancelBulkDelete() {
+        bulkDeleteJob?.cancel()
+        _bulkDeleteProgress.value = null
     }
 
     fun restoreRecycledFile(fileName: String) {
